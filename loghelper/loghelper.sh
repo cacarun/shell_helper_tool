@@ -61,10 +61,12 @@ mkLogDir(){
 }
 unzipFile(){
 	fileName=$1
+	#cur="./"
 	fliePrefix=${fileName%%.*}
-	# echo "test unzipFile fileName:$fileName fliePrefix:$fliePrefix";
+	#echo "test unzipFile fileName:$fileName fliePrefix:$fliePrefix";
 	echo "解压一级目录: $fliePrefix";
-	command unzip -o -q  $fileName -d $fliePrefix	
+	command unzip -o -q  $fileName -d $fliePrefix
+	#command unzip -o -q  $fileName
 	#command gunzip -r  $fileName
 }
 
@@ -104,8 +106,10 @@ loopDir(){
 
 unzipSubFile(){
 	zipFilePrefix=$1
+	#echo "test unzipSubFile zipFilePrefix: $zipFilePrefix"
 	echo "解压二级目录: "
 	command cd $zipFilePrefix
+	#echo "test unzipSubFile cd: $zipFilePrefix"
 	command ls *.zip
 	command ls *.zip | xargs -n1 unzip -o -q -P infected
 	#command ls *.zip | xargs -n1 unzip -o
@@ -116,7 +120,7 @@ unzipSubFile(){
 finsStrByKey(){
 	key=${@:1}
 	echo -e "开始查找：$key";
-	command ls
+	command ls *.log
 	#alreadyLogFile=${key}".log"
 	alreadyLogFile="result.log"
 	echo -e "\n输出目标文件：$alreadyLogFile";
@@ -189,6 +193,8 @@ then
 		        # 得到文件前缀 如：log
 		        zipFilePrefix=${zipFile%%.*}
 
+		        #echo "test zipFilePath:$zipFilePath zipFile:$zipFile zipFilePrefix:$zipFilePrefix"
+
 		        # 新建一级解压目录
 		        # mkLogDir $zipFilePrefix
 		        mkLogDir $zipFile
@@ -212,7 +218,7 @@ then
 				key=$2
 				# 找到目标日志放到当前目录的 result.log 文件
 				finsStrByKey $key 
-				echo -e "---------------- 查询结束 --------------------";
+				echo -e "---------------- 查询结束 --------------------\n";
 
 				# 返回到一级目录
 				command cd ..
@@ -222,7 +228,6 @@ then
 
 	# merge result
 	command rm -f merge.log
-	echo -e "\n已合并所有 result.log 日志结果到 merge.log";
 	for file in ./*
 	do
 	    if test -d $file
@@ -232,23 +237,28 @@ then
 	    	logPath=$file
 	        # 得到文件名 log.zip
 	        logFile=${logPath##*/}
-	        #echo "$logFile"
-
 	        # 得到文件前缀 log
 	        logFilePrefix=${logFile%%.*}
-	        #echo "$logFilePrefix"
+	        #echo "test merge result logPath:$logPath logFile:$logFile logFilePrefix:$logFilePrefix"
 
-	        command cd $logFilePrefix
+	        if [ $logFilePrefix == *MACOSX* ]
+	        then
+				echo "filter MACOSX"
+			else
+				command cd $logFilePrefix
 
-	    	# echo -e "\n合并";
-	    	# command ls
-			
-			echo -e "\n" >> ../merge.log
+		    	# echo -e "\n合并";
+		    	# command ls
+				
+				echo -e "\n" >> ../merge.log
 
-			command cat ./result.log >> ../merge.log
-			command cd ..
+				command cat ./result.log >> ../merge.log
+				command cd ..
+			fi
+	        
 	    fi
 	done
+	echo -e "已合并所有 result.log 日志结果到 merge.log"
 
 else
 	echo -e "\n[单日志压缩包处理]"
@@ -258,7 +268,8 @@ else
 	# 得到文件名 如：log.zip
 	zipFile=${firstParam##*/}
 	# 得到文件前缀 如：log
-	zipFilePrefix=${firstParam%%.*}
+	zipFilePrefix=${zipFile%%.*}
+	#echo "test zipFilePath:$zipFilePath zipFile:$zipFile zipFilePrefix:$zipFilePrefix"
 
 	command cd $zipFilePath
 	mkLogDir $zipFile
@@ -270,7 +281,7 @@ else
 		# loopDir $zipFile
 		# echo "进入二级目录"
 	    # command cd $zipFilePrefix
-
+	    
 		unzipSubFile $zipFilePrefix
 		echo -e "---------------- 解压结束 --------------------";
 	fi
